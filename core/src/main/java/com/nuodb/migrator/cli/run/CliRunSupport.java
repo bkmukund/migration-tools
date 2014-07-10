@@ -906,7 +906,6 @@ public class CliRunSupport extends CliSupport {
 
     protected Collection<MetaDataType> parseObjectTypes(OptionSet optionSet) {
         Collection<MetaDataType> objectTypes = newArrayList(MetaDataType.TYPES);
-        Collection<String> skipObjectTypes = newArrayList();
         if (optionSet.hasOption(META_DATA)) {
             Collection<String> names = optionSet.getValues(META_DATA);
             Map<String, MetaDataType> objectTypeMap = new TreeMap<String, MetaDataType>(String.CASE_INSENSITIVE_ORDER);
@@ -921,7 +920,6 @@ public class CliRunSupport extends CliSupport {
                     if (logger.isWarnEnabled()) {
                         logger.warn(format("Objects of %s type are excluded from processing", name));
                     }
-                    skipObjectTypes.add(name);
                     objectTypes.remove(objectType);
                 }
             }
