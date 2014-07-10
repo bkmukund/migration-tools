@@ -58,6 +58,7 @@ import com.nuodb.migrator.spec.ScriptGeneratorJobSpecBase;
 import com.nuodb.migrator.utils.PrioritySet;
 import com.nuodb.migrator.utils.ReflectionException;
 import com.nuodb.migrator.utils.ReflectionUtils;
+import org.slf4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -81,7 +82,6 @@ import static com.nuodb.migrator.jdbc.dialect.IdentifierNormalizers.*;
 import static com.nuodb.migrator.jdbc.dialect.IdentifierQuotings.ALWAYS;
 import static com.nuodb.migrator.jdbc.dialect.IdentifierQuotings.MINIMAL;
 import static com.nuodb.migrator.jdbc.metadata.generator.ScriptType.valueOf;
-import static com.nuodb.migrator.spec.MigrationMode.DATA;
 import static com.nuodb.migrator.utils.Collections.newPrioritySet;
 import static com.nuodb.migrator.utils.Priority.HIGH;
 import static com.nuodb.migrator.utils.Priority.LOW;
@@ -96,12 +96,15 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.TimeZone.getTimeZone;
 import static org.apache.commons.lang3.StringUtils.*;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author Sergey Bushik
  */
 @SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions"})
 public class CliRunSupport extends CliSupport {
+
+    protected Logger logger = getLogger(getClass());
 
     public static final TimeZone DEFAULT_TIME_ZONE = getTimeZone("UTC");
     public static final String IDENTIFIER_QUOTING_MINIMAL = "minimal";
@@ -903,16 +906,22 @@ public class CliRunSupport extends CliSupport {
 
     protected Collection<MetaDataType> parseObjectTypes(OptionSet optionSet) {
         Collection<MetaDataType> objectTypes = newArrayList(MetaDataType.TYPES);
+        Collection<String> skipObjectTypes = newArrayList();
         if (optionSet.hasOption(META_DATA)) {
-            Collection<String> values = optionSet.getValues(META_DATA);
+            Collection<String> names = optionSet.getValues(META_DATA);
             Map<String, MetaDataType> objectTypeMap = new TreeMap<String, MetaDataType>(String.CASE_INSENSITIVE_ORDER);
             objectTypeMap.putAll(MetaDataType.NAME_TYPE_MAP);
-            for (Iterator<String> iterator = values.iterator(); iterator.hasNext(); ) {
-                MetaDataType objectType = objectTypeMap.get(replace(iterator.next(), ".", "_"));
+            for (Iterator<String> iterator = names.iterator(); iterator.hasNext(); ) {
+                String name = iterator.next();
+                MetaDataType objectType = objectTypeMap.get(replace(name, ".", "_"));
                 String booleanValue = iterator.next();
                 if (booleanValue == null || parseBoolean(booleanValue)) {
                     objectTypes.add(objectType);
                 } else {
+                    if (logger.isWarnEnabled()) {
+                        logger.warn(format("Objects of %s type are excluded from processing", name));
+                    }
+                    skipObjectTypes.add(name);
                     objectTypes.remove(objectType);
                 }
             }
