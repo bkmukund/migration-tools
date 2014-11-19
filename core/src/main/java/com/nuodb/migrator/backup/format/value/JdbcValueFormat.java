@@ -27,10 +27,13 @@
  */
 package com.nuodb.migrator.backup.format.value;
 
+import com.nuodb.migrator.jdbc.metadata.Column;
+import com.nuodb.migrator.jdbc.metadata.resolver.ServiceResolverAware;
 import com.nuodb.migrator.jdbc.model.Field;
 import com.nuodb.migrator.jdbc.type.JdbcValueAccess;
 
 import javax.sql.rowset.serial.SerialRef;
+
 import java.io.*;
 import java.math.BigDecimal;
 import java.net.URL;
@@ -86,6 +89,10 @@ public class JdbcValueFormat extends ValueFormatBase<Object> {
                 value = binary(access.getValue(byte[].class, options));
                 break;
             case Types.OTHER:
+                if (field instanceof Column) {
+                    value = string(null);
+                    break;
+                }
             case Types.JAVA_OBJECT:
             case Types.STRUCT:
                 result = access.getValue(options);

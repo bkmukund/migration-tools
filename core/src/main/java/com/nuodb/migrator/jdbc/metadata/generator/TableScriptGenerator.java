@@ -349,7 +349,8 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
         if (scale < 0 && !dialect.supportsNegativeScale()) {
             jdbcType = jdbcType.withScale(0);
         }
-        DatabaseInfo databaseInfo = scriptGeneratorManager.getSourceSession().getDialect().getDatabaseInfo();
+        Dialect sourceDialect = scriptGeneratorManager.getSourceSession().getDialect();
+        DatabaseInfo databaseInfo = sourceDialect.getDatabaseInfo();
         String typeName = dialect.getTypeName(databaseInfo, jdbcType);
         if (typeName == null) {
             String tableName = scriptGeneratorManager.getQualifiedName(column.getTable(),
@@ -364,6 +365,12 @@ public class TableScriptGenerator extends ScriptGeneratorBase<Table> {
             }
             if (column.getScale() != null) {
                 typeInfo.add(format("scale %d", column.getScale()));
+            }
+            if(column.isUserDefinedType() &&
+                    sourceDialect.getUserDefinedTypeName() != null){
+                logger.warn(format("Unsupported type on table %s column %s: %s",
+                            tableName, columnName, join(typeInfo, ", ")));
+                return sourceDialect.getUserDefinedTypeName();
             }
             throw new GeneratorException(
                     format("Unsupported type on table %s column %s: %s",

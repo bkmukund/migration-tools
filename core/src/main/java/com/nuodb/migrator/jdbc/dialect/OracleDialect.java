@@ -222,4 +222,9 @@ public class OracleDialect extends SimpleDialect {
     public RowCountHandler createRowCountHandler(Table table, Column column, String filter, RowCountType rowCountType) {
         return new OracleTableRowCountHandler(this, table, column, filter, rowCountType);
     }
+
+    @Override
+    public String getUserDefinedTypeName(){
+        return "BLOB";
+    }
 }

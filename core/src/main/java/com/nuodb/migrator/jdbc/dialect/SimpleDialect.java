@@ -781,6 +781,10 @@ public class SimpleDialect extends SimpleServiceResolverAware<Dialect> implement
         return typeName;
     }
 
+    public String getUserDefinedTypeName(){
+        return null;
+    }
+
     protected void removeJdbcTypeName(int typeCode) {
         getJdbcTypeNameMap().removeJdbcTypeName(typeCode);
     }

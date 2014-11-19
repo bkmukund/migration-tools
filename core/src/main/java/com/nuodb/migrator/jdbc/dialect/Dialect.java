@@ -214,5 +214,7 @@ public interface Dialect {
     ScriptEscapeUtils getScriptEscapeUtils();
 
     TranslationManager getTranslationManager();
+    
+    String getUserDefinedTypeName();
 }
 

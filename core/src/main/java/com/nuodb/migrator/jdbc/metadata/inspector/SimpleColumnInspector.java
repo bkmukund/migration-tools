@@ -34,6 +34,7 @@ import com.nuodb.migrator.jdbc.type.JdbcTypeDesc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import static com.nuodb.migrator.jdbc.metadata.DefaultValue.valueOf;
 import static com.nuodb.migrator.jdbc.metadata.MetaDataType.COLUMN;
@@ -45,6 +46,8 @@ import static com.nuodb.migrator.utils.StringUtils.isEmpty;
  */
 public class SimpleColumnInspector extends TableInspectorBase<Table, TableInspectionScope> {
 
+    protected ArrayList<String> userDefinedTypes;
+    
     public SimpleColumnInspector() {
         super(COLUMN, TableInspectionScope.class);
     }
@@ -52,6 +55,7 @@ public class SimpleColumnInspector extends TableInspectorBase<Table, TableInspec
     @Override
     protected ResultSet createResultSet(InspectionContext inspectionContext, TableInspectionScope tableInspectionScope)
             throws SQLException {
+        userDefinedTypes = getUserDefinedTypes(inspectionContext,tableInspectionScope.getSchema());
         return inspectionContext.getConnection().getMetaData().getColumns(
                 tableInspectionScope.getCatalog(), tableInspectionScope.getSchema(),
                 tableInspectionScope.getTable(), null);
@@ -95,4 +99,10 @@ public class SimpleColumnInspector extends TableInspectorBase<Table, TableInspec
     protected boolean supportsScope(TableInspectionScope tableInspectionScope) {
         return tableInspectionScope.getTable() != null;
     }
+
+    protected ArrayList<String> getUserDefinedTypes(InspectionContext inspectionContext, 
+            String schema) throws SQLException {
+        return null;
+    }
+
 }

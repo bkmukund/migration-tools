@@ -82,7 +82,11 @@ public class Column extends IdentifiableBase implements Field {
     private Trigger trigger;
 
     private DefaultValue defaultValue;
-
+    /**
+     * Column is user defined type
+     */
+    private boolean userDefinedType;
+    
     public Column() {
         super(COLUMN);
     }
@@ -231,6 +235,14 @@ public class Column extends IdentifiableBase implements Field {
         return sequence;
     }
 
+    public boolean isUserDefinedType() {
+        return userDefinedType;
+    }
+
+    public void setUserDefinedType(boolean userDefinedType) {
+        this.userDefinedType = userDefinedType;
+    }
+
     public void setSequence(Sequence sequence) {
         if (!ObjectUtils.equals(this.sequence, sequence)) {
             if (sequence != null) {
@@ -301,6 +313,7 @@ public class Column extends IdentifiableBase implements Field {
         if (jdbcType != null ? !jdbcType.equals(column.jdbcType) : column.jdbcType != null) return false;
         if (defaultValue != null ? !defaultValue.equals(column.defaultValue) : column.defaultValue != null)
             return false;
+        if (userDefinedType != column.userDefinedType) return false;
 
         return true;
     }
@@ -314,6 +327,7 @@ public class Column extends IdentifiableBase implements Field {
         result = 31 * result + (nullable ? 1 : 0);
         result = 31 * result + (autoIncrement ? 1 : 0);
         result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
+        result = 31 * result + (userDefinedType ? 1 : 0);
         return result;
     }
 

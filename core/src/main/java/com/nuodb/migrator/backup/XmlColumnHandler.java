@@ -67,6 +67,7 @@ public class XmlColumnHandler extends XmlIdentifiableHandlerBase<Column> {
     private static final String CHECK_ELEMENT = "check";
     private static final String SEQUENCE_ELEMENT = "sequence";
     private static final String REF_INDEX_ATTRIBUTE = "ref-index";
+    private static final String USER_TYPE_ATTRIBUTE = "user-type";
 
     public XmlColumnHandler() {
         super(Column.class);
@@ -85,6 +86,7 @@ public class XmlColumnHandler extends XmlIdentifiableHandlerBase<Column> {
         column.setNullable(context.readAttribute(input, NULLABLE_ATTRIBUTE, Boolean.class, false));
         column.setAutoIncrement(context.readAttribute(input, AUTO_INCREMENT_ATTRIBUTE, Boolean.class, false));
         column.setDefaultValue(valueOf(context.readAttribute(input, DEFAULT_VALUE_ATTRIBUTE, String.class)));
+        column.setUserDefinedType(context.readAttribute(input, USER_TYPE_ATTRIBUTE, Boolean.class, false));
     }
 
     @Override
@@ -133,6 +135,8 @@ public class XmlColumnHandler extends XmlIdentifiableHandlerBase<Column> {
         if (defaultValue != null && defaultValue.getScript() != null) {
             context.writeAttribute(output, DEFAULT_VALUE_ATTRIBUTE, defaultValue.getScript());
         }
+        if(column.isUserDefinedType())
+            context.writeAttribute(output, USER_TYPE_ATTRIBUTE, column.isUserDefinedType());
     }
 
     @Override

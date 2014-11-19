@@ -28,10 +28,17 @@
 package com.nuodb.migrator.jdbc.metadata.inspector;
 
 import com.nuodb.migrator.jdbc.metadata.Column;
+import com.nuodb.migrator.jdbc.query.SelectQuery;
+import com.nuodb.migrator.jdbc.query.StatementAction;
+import com.nuodb.migrator.jdbc.query.StatementFactory;
+import com.nuodb.migrator.jdbc.query.StatementTemplate;
 import com.nuodb.migrator.jdbc.type.JdbcTypeDesc;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import static com.nuodb.migrator.jdbc.metadata.DefaultValue.valueOf;
 import static com.nuodb.migrator.jdbc.model.FieldFactory.newFieldList;
@@ -77,5 +84,43 @@ public class OracleColumnInspector extends SimpleColumnInspector {
         column.setAutoIncrement("YES".equals(autoIncrement));
         column.setNullable("YES".equals(columns.getString("IS_NULLABLE")));
         column.setDefaultValue(valueOf(defaultValue, true));
+        column.setUserDefinedType(userDefinedTypes != null ? userDefinedTypes.contains(column.getTypeName()):false);
+    }
+
+    /**
+     * Fetches all the user types for a schema
+     *
+     * @param inspectionContext with inspection data
+     * @param schema   Schema value
+     * @throws SQLException
+     */
+    @Override
+    protected ArrayList<String> getUserDefinedTypes(InspectionContext inspectionContext, final String schema) 
+            throws SQLException {
+            StatementTemplate template = new StatementTemplate(inspectionContext.getConnection());
+            ArrayList<String> udTypeList = template.executeStatement(
+                    new StatementFactory<PreparedStatement>() {
+                        @Override
+                        public PreparedStatement createStatement(Connection connection) throws SQLException {
+                            SelectQuery uerTypeQuery = new SelectQuery();
+                            uerTypeQuery.column("TYPE_NAME");
+                            uerTypeQuery.from("ALL_TYPES");
+                            uerTypeQuery.where("OWNER = ?");
+                            return connection.prepareStatement(uerTypeQuery.toString());
+                        }
+                    }, new StatementAction<PreparedStatement, ArrayList<String>>() {
+                        @Override
+                        public ArrayList<String> executeStatement(PreparedStatement statement) throws SQLException {
+                            statement.setString(1, schema);
+                            ResultSet udTypesRS = statement.executeQuery();
+                            ArrayList<String> udTypes = new ArrayList<String>();
+                            while (udTypesRS.next()) {
+                                udTypes.add(udTypesRS.getString(1));
+                            }
+                            return udTypes;
+                        }
+                    }
+            );
+        return udTypeList;
     }
 }
