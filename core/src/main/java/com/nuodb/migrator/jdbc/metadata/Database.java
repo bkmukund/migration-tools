@@ -47,12 +47,15 @@ import static org.apache.commons.lang3.StringUtils.split;
 
 public class Database extends IdentifiableBase implements HasSchemas {
 
+    private static final String SQL = "SQL";
+
     private final Map<Identifier, Catalog> catalogs = newLinkedHashMap();
 
     private Dialect dialect;
     private DriverInfo driverInfo;
     private DatabaseInfo databaseInfo;
     private ConnectionSpec connectionSpec;
+    private String encoding;
 
     public Database() {
         super(MetaDataType.DATABASE, false);
@@ -104,6 +107,23 @@ public class Database extends IdentifiableBase implements HasSchemas {
 
     public Catalog getCatalog(Identifier identifier) {
         return addCatalog(identifier, false);
+    }
+
+    public String getEncoding() {
+        if(encoding!=null) {
+            if(encoding.startsWith(SQL)) {
+                String charset[] = encoding.split("_");
+                encoding = charset[1];
+            }else {
+                String charset[] = encoding.split("_");
+                encoding = charset[0];
+            }
+        }
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
     }
 
     public Catalog addCatalog(String name) {

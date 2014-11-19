@@ -67,6 +67,7 @@ public class SimpleDatabaseInspector extends MetaDataHandlerBase implements Insp
         if (logger.isDebugEnabled()) {
             logger.debug(format("Database info %s", databaseInfo));
         }
+        database.setEncoding(getCollation(inspectionContext, database));
         database.setDatabaseInfo(databaseInfo);
 
         database.setDialect(inspectionContext.getDialect());
@@ -110,5 +111,9 @@ public class SimpleDatabaseInspector extends MetaDataHandlerBase implements Insp
     public boolean supportsScope(InspectionContext inspectionContext, InspectionScope inspectionScope)
             throws SQLException {
         return true;
+    }
+
+    protected String getCollation(InspectionContext inspectionContext, Database database) throws SQLException {
+        return null;
     }
 }

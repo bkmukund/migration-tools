@@ -59,6 +59,10 @@ public class CsvOutput extends OutputBase implements CsvFormat {
         return TYPE;
     }
 
+    public String getEncoding() {
+        return ENCODING;
+    }
+
     @Override
     protected void init(OutputStream outputStream) {
         init(new OutputStreamWriter(outputStream, forName((String) getAttribute(ATTRIBUTE_ENCODING, ENCODING))));

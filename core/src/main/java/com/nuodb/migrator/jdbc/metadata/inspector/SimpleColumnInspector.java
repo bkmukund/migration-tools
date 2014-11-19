@@ -34,6 +34,7 @@ import com.nuodb.migrator.jdbc.type.JdbcTypeDesc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 
 import static com.nuodb.migrator.jdbc.metadata.DefaultValue.valueOf;
 import static com.nuodb.migrator.jdbc.metadata.MetaDataType.COLUMN;
@@ -45,6 +46,8 @@ import static com.nuodb.migrator.utils.StringUtils.isEmpty;
  */
 public class SimpleColumnInspector extends TableInspectorBase<Table, TableInspectionScope> {
 
+    HashMap<String,String> columnCollations;
+    
     public SimpleColumnInspector() {
         super(COLUMN, TableInspectionScope.class);
     }
@@ -52,6 +55,8 @@ public class SimpleColumnInspector extends TableInspectorBase<Table, TableInspec
     @Override
     protected ResultSet createResultSet(InspectionContext inspectionContext, TableInspectionScope tableInspectionScope)
             throws SQLException {
+        columnCollations = getColumnCollations(inspectionContext,
+                tableInspectionScope.getSchema(),tableInspectionScope.getTable());
         return inspectionContext.getConnection().getMetaData().getColumns(
                 tableInspectionScope.getCatalog(), tableInspectionScope.getSchema(),
                 tableInspectionScope.getTable(), null);
@@ -64,6 +69,8 @@ public class SimpleColumnInspector extends TableInspectorBase<Table, TableInspec
             Table table = addTable(inspectionResults, columns.getString("TABLE_CAT"),
                     columns.getString("TABLE_SCHEM"), columns.getString("TABLE_NAME"));
             Column column = table.addColumn(columns.getString("COLUMN_NAME"));
+            column.setEncoding(columnCollations != null ? 
+                    columnCollations.get(columns.getString("COLUMN_NAME")):null);
             processColumn(inspectionContext, columns, column);
             inspectionResults.addObject(column);
         }
@@ -94,5 +101,10 @@ public class SimpleColumnInspector extends TableInspectorBase<Table, TableInspec
     @Override
     protected boolean supportsScope(TableInspectionScope tableInspectionScope) {
         return tableInspectionScope.getTable() != null;
+    }
+
+    protected HashMap<String,String> getColumnCollations(InspectionContext inspectionContext, String schema, String table)
+            throws SQLException {
+        return null;
     }
 }

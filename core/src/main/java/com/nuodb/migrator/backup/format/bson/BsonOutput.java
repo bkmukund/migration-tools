@@ -61,6 +61,11 @@ public class BsonOutput extends OutputBase implements BsonFormat {
     }
 
     @Override
+    public String getEncoding() {
+        return null;
+    }
+
+    @Override
     protected void init(OutputStream output) {
         try {
             bsonWriter = createBsonFactory().createJsonGenerator(output);

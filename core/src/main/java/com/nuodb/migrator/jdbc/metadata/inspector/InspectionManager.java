@@ -59,6 +59,7 @@ public class InspectionManager {
     public InspectionManager() {
         InspectorResolver databaseInspector = new InspectorResolver(DATABASE, new SimpleDatabaseInspector());
         databaseInspector.register(NUODB, new NuoDBDatabaseInspector());
+        databaseInspector.register(MSSQL_SERVER, new MSSQLServerDatabaseInspector());
         addInspector(databaseInspector);
 
         addInspector(new SimpleCatalogInspector());

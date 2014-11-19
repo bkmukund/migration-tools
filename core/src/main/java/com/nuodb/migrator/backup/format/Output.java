@@ -52,4 +52,6 @@ public interface Output extends Format {
     OutputStream getOutputStream();
 
     void setOutputStream(OutputStream outputStream);
+
+    String getEncoding();
 }

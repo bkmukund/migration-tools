@@ -149,7 +149,8 @@ public class XmlOutput extends OutputBase implements XmlFormat {
         }
     }
 
-    protected String getEncoding() {
+    @Override
+    public String getEncoding() {
         return (String) getAttribute(ATTRIBUTE_VERSION, ENCODING);
     }
 

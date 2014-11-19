@@ -29,9 +29,16 @@ package com.nuodb.migrator.jdbc.metadata.inspector;
 
 import com.nuodb.migrator.jdbc.metadata.Column;
 import com.nuodb.migrator.jdbc.metadata.DefaultValue;
+import com.nuodb.migrator.jdbc.query.SelectQuery;
+import com.nuodb.migrator.jdbc.query.StatementAction;
+import com.nuodb.migrator.jdbc.query.StatementFactory;
+import com.nuodb.migrator.jdbc.query.StatementTemplate;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 
 import static com.nuodb.migrator.jdbc.metadata.DefaultValue.valueOf;
 import static org.apache.commons.lang3.StringUtils.endsWith;
@@ -53,5 +60,39 @@ public class MSSQLServerColumnInspector extends SimpleColumnInspector {
             }
             column.setDefaultValue(valueOf(value, true));
         }
+    }
+
+    /** 
+    * This method is overridden to build a query to fetch column collation information from MSSQLSERVER 
+    * sys.columns  table 
+    */
+    @Override
+    protected HashMap<String,String> getColumnCollations(InspectionContext inspectionContext, final String schema, final String table)
+            throws SQLException {
+            StatementTemplate template = new StatementTemplate(inspectionContext.getConnection());
+            HashMap<String,String> collationsList = template.executeStatement(
+                    new StatementFactory<PreparedStatement>() {
+                        @Override
+                        public PreparedStatement createStatement(Connection connection) throws SQLException {
+                            SelectQuery collationsQuery = new SelectQuery();
+                            collationsQuery.column("name");
+                            collationsQuery.column("collation_name");
+                            collationsQuery.from("sys.columns");
+                            collationsQuery.where("object_id = OBJECT_ID('".concat(schema.concat(".").concat(table)).concat("')"));
+                            return connection.prepareStatement(collationsQuery.toString());
+                        }
+                    }, new StatementAction<PreparedStatement, HashMap<String,String>>() {
+                        @Override
+                        public HashMap<String,String> executeStatement(PreparedStatement statement) throws SQLException {
+                            ResultSet collationsRS = statement.executeQuery();
+                            HashMap<String,String> collationsTypes = new HashMap<String,String>();
+                            while (collationsRS.next()) {
+                                collationsTypes.put(collationsRS.getString(1),collationsRS.getString(2));
+                            }
+                            return collationsTypes;
+                        }
+                    }
+            );
+        return collationsList;
     }
 }

@@ -47,6 +47,7 @@ public class Column extends IdentifiableBase implements Field {
     public static final int DEFAULT_SIZE = 0;
     public static final int DEFAULT_PRECISION = 38;
     public static final int DEFAULT_SCALE = 0;
+    private static final String SQL = "SQL";
 
     private Table table;
 
@@ -80,6 +81,10 @@ public class Column extends IdentifiableBase implements Field {
      * Column trigger
      */
     private Trigger trigger;
+    /**
+     * Column encoding
+     */
+    private String encoding;
 
     private DefaultValue defaultValue;
 
@@ -229,6 +234,23 @@ public class Column extends IdentifiableBase implements Field {
 
     public Sequence getSequence() {
         return sequence;
+    }
+
+    public String getEncoding() {
+        if(encoding!=null) {
+            if(encoding.startsWith(SQL)) {
+                String charset[] = encoding.split("_");
+                encoding = charset[1];
+            }else {
+                String charset[] = encoding.split("_");
+                encoding = charset[0];
+            }
+        }
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
     }
 
     public void setSequence(Sequence sequence) {

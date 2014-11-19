@@ -31,6 +31,8 @@ import com.nuodb.migrator.backup.Chunk;
 import com.nuodb.migrator.backup.Column;
 import com.nuodb.migrator.backup.QueryRowSet;
 import com.nuodb.migrator.backup.RowSet;
+import com.nuodb.migrator.backup.TableRowSet;
+import com.nuodb.migrator.backup.format.Format;
 import com.nuodb.migrator.backup.format.Output;
 import com.nuodb.migrator.backup.format.value.Row;
 import com.nuodb.migrator.backup.format.value.Value;
@@ -44,12 +46,16 @@ import com.nuodb.migrator.jdbc.query.StatementCallback;
 import com.nuodb.migrator.jdbc.session.WorkForkJoinTaskBase;
 import com.nuodb.migrator.jdbc.split.QuerySplit;
 import com.nuodb.migrator.utils.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+
+import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.Iterator;
 
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.indexOf;
@@ -62,8 +68,10 @@ import static com.nuodb.migrator.jdbc.model.FieldFactory.newFieldList;
 import static com.nuodb.migrator.utils.Collections.isEmpty;
 import static com.nuodb.migrator.utils.Predicates.equalTo;
 import static com.nuodb.migrator.utils.Predicates.instanceOf;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * Work executed by a thread, which exports table rows to a row set. Row set is split into chunks if specified.
@@ -75,6 +83,8 @@ public class WriteQueryWork extends WorkForkJoinTaskBase {
 
     private static final String QUERY = "query";
 
+    protected final transient Logger logger = getLogger(getClass());
+
     private final BackupWriterManager backupWriterManager;
     private final WriteQuery writeQuery;
     private final QuerySplit querySplit;
@@ -85,6 +95,7 @@ public class WriteQueryWork extends WorkForkJoinTaskBase {
     private Collection<Chunk> chunks;
     private BackupWriterContext backupWriterContext;
     private ValueHandleList valueHandleList;
+    private Charset scharset,tcharset = null;
 
     public WriteQueryWork(WriteQuery writeQuery, QuerySplit querySplit,
                           boolean hasNextQuerySplit, BackupWriterManager backupWriterManager) {
@@ -179,6 +190,7 @@ public class WriteQueryWork extends WorkForkJoinTaskBase {
     protected void writeStart(Chunk chunk) throws Exception {
         output.setOutputStream(backupWriterContext.getBackupOps().openOutput(chunk.getName()));
         output.init();
+        checkEncoding();
         output.writeStart();
         backupWriterManager.writeStart(this, writeQuery, chunk);
     }
@@ -250,6 +262,41 @@ public class WriteQueryWork extends WorkForkJoinTaskBase {
 
     protected Collection<Chunk> getChunks() {
         return chunks;
+    }
+
+    /**
+    * Check Database and Columns encoding and issue warning message. 
+    */
+    private void checkEncoding() {
+        checkDatabaseEncoding();
+        checkColumnEncoding();
+    }
+
+    private void checkDatabaseEncoding() {
+        checkCharset("Database ".concat(((TableRowSet)writeQuery.getRowSet()).getCatalog()), 
+                backupWriterContext.getDatabase().getEncoding());
+    }
+
+    private void checkColumnEncoding() {
+        Table table = ((WriteTable) writeQuery).getTable();
+        Iterator<com.nuodb.migrator.jdbc.metadata.Column> columnIterator = table.getColumns().iterator();
+
+        while(columnIterator.hasNext()) {
+            com.nuodb.migrator.jdbc.metadata.Column column = columnIterator.next();
+            if (column.getEncoding() == null) continue;
+            checkCharset( "Column ".concat(table.getName().concat(".").concat(column.getName())), column.getEncoding());
+        }
+    }
+
+    private void checkCharset(String type, String srcEncoding) {
+        if(srcEncoding == null || output.getEncoding() == null) return;
+        scharset = Charset.forName(srcEncoding);
+        tcharset = Charset.forName(output.getEncoding());
+        if ((scharset != null) && (scharset.compareTo(tcharset) != 0)) {
+            if (logger.isWarnEnabled()) {
+                logger.warn(format("%s encoding is: %s  :: target encoding is: %s ",type,scharset,tcharset));
+            }
+        }
     }
 
     @Override
