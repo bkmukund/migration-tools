@@ -9,6 +9,8 @@ notifications:
   recipients:
     - bmukund@nuodb.com
     - bal.mukund4u@gmail.com
+    
+sudo: false
 
 before_install:
   - ./test/mysql_setup.sh
